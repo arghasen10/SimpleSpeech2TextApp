@@ -9,6 +9,7 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.media.MediaPlayer;
 import android.os.Build;
 import android.os.Bundle;
 import android.speech.RecognitionListener;
@@ -48,6 +49,7 @@ public class MainActivity extends AppCompatActivity {
     private Button annotate;
     private TextView userName;
     private TextView notify;
+    private Boolean isPressed;
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -62,8 +64,11 @@ public class MainActivity extends AppCompatActivity {
         micButton = findViewById(R.id.button);
         annotate = findViewById(R.id.annotate);
         notify = findViewById(R.id.notify);
+        isPressed = false;
         speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this);
         userName.setText(LoginActivity.username);
+        final MediaPlayer mic_start = MediaPlayer.create(this, R.raw.discord_sounds);
+        final MediaPlayer mic_stop = MediaPlayer.create(this, R.raw.discord_leave);
         final Intent speechRecognizerIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
         speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
@@ -126,6 +131,8 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onResults(Bundle bundle) {
                 micButton.setImageResource(R.drawable.ic_mic);
+                mic_stop.start();
+                Log.e("MicStop","Mic Stop");
                 ArrayList<String> data = bundle.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
                 editText.setText(data.get(0));
             }
@@ -144,12 +151,21 @@ public class MainActivity extends AppCompatActivity {
         micButton.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
-                if (motionEvent.getAction() == MotionEvent.ACTION_UP){
-                    speechRecognizer.stopListening();
-                }
                 if (motionEvent.getAction() == MotionEvent.ACTION_DOWN){
-                    micButton.setImageResource(R.drawable.ic_mic_on);
-                    speechRecognizer.startListening(speechRecognizerIntent);
+                    isPressed = !isPressed;
+                    if(isPressed == true){
+                        micButton.setImageResource(R.drawable.ic_mic_on);
+                        speechRecognizer.startListening(speechRecognizerIntent);
+                        mic_start.start();
+                        Log.e("StartListening", "Start Listening");
+                    }
+                    else {
+                        speechRecognizer.stopListening();
+                        editText.setText("");
+                        editText.setHint("Tap to Speak");
+                        micButton.setImageResource(R.drawable.ic_mic);
+                        mic_stop.start();
+                    }
                 }
                 return false;
             }
