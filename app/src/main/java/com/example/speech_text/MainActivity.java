@@ -13,6 +13,8 @@ import android.os.Bundle;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
@@ -63,6 +65,29 @@ public class MainActivity extends AppCompatActivity {
         final Intent speechRecognizerIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
         speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
+        annotate.setEnabled(false);
+
+        editText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                // Not used
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                // Check if the EditText is empty or not
+                boolean isEditTextEmpty = s.toString().trim().isEmpty();
+
+                // Enable or disable the button based on the EditText's text length
+                annotate.setEnabled(!isEditTextEmpty);
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                // Not used
+            }
+        });
+
 
         speechRecognizer.setRecognitionListener(new RecognitionListener() {
             @Override
@@ -153,6 +178,8 @@ public class MainActivity extends AppCompatActivity {
                         public void onResponse(JSONObject response) {
                             // Handle successful response
                             Log.d("Response", response.toString());
+                            editText.setText("");
+                            editText.setHint("Tap to Speak");
                         }
                     },
                     new Response.ErrorListener() {
