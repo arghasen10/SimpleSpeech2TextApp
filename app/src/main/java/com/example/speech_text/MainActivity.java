@@ -66,7 +66,7 @@ public class MainActivity extends AppCompatActivity {
         notify = findViewById(R.id.notify);
         isPressed = false;
         speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this);
-        userName.setText(LoginActivity.username);
+        userName.setText("User: "+LoginActivity.username);
         final MediaPlayer mic_start = MediaPlayer.create(this, R.raw.discord_sounds);
         final MediaPlayer mic_stop = MediaPlayer.create(this, R.raw.discord_leave);
         final Intent speechRecognizerIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
@@ -87,6 +87,12 @@ public class MainActivity extends AppCompatActivity {
 
                 // Enable or disable the button based on the EditText's text length
                 annotate.setEnabled(!isEditTextEmpty);
+                if(isEditTextEmpty == true){
+                    annotate.setBackgroundColor(Color.parseColor("#CE93D8"));
+                }
+                else {
+                    annotate.setBackgroundColor(Color.parseColor("#9C27B0"));
+                }
             }
 
             @Override
@@ -135,6 +141,7 @@ public class MainActivity extends AppCompatActivity {
                 Log.e("MicStop","Mic Stop");
                 ArrayList<String> data = bundle.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
                 editText.setText(data.get(0));
+                isPressed = false;
             }
 
             @Override
