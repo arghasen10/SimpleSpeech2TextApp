@@ -31,7 +31,7 @@
             android:src="@drawable/ic_mic" />
 
         <Button
-            android:id="@+id/button2"
+            android:id="@+id/annotate"
             android:layout_margin="20dp"
             android:layout_width="0dp"
             android:layout_height="75dp"

@@ -13,6 +13,7 @@ import android.os.Bundle;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
@@ -20,26 +21,43 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+import com.android.volley.AuthFailureError;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 import java.util.ArrayList;
 import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
+    private RequestQueue requestQueue;
     public static final Integer RecordAudioRequestCode = 1;
     private SpeechRecognizer speechRecognizer;
     private EditText editText;
     private ImageView micButton;
+    private Button annotate;
     private TextView userName;
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
         if(ContextCompat.checkSelfPermission(this,Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED){
             checkPermission();
         }
-
+        requestQueue = Volley.newRequestQueue(this);
         userName = findViewById(R.id.user);
         editText = findViewById(R.id.text);
         micButton = findViewById(R.id.button);
+        annotate = findViewById(R.id.annotate);
         speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this);
         userName.setText(LoginActivity.username);
         final Intent speechRecognizerIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
@@ -110,7 +128,45 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        annotate.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                sendJsonValue();
+            }
+        });
 
+
+    }
+
+    private void sendJsonValue() {
+        String url = "https://10.5.20.174:3000/label";
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+        String currentDateAndTime = dateFormat.format(new Date());
+        String jsonString = String.format("{\"customer\":\"%s\", \"ts\":\"%s\", \"label\":\"%s\"}", LoginActivity.username, currentDateAndTime, editText.getText());
+        HttpsTrustManager.allowAllSSL();
+        try {
+            JSONObject jsonBody = new JSONObject(jsonString);
+
+            JsonObjectRequest request = new JsonObjectRequest(Request.Method.POST, url, jsonBody,
+                    new Response.Listener<JSONObject>() {
+                        @Override
+                        public void onResponse(JSONObject response) {
+                            // Handle successful response
+                            Log.d("Response", response.toString());
+                        }
+                    },
+                    new Response.ErrorListener() {
+                        @Override
+                        public void onErrorResponse(VolleyError error) {
+                            // Handle error response
+                            Log.e("Error", error.toString());
+                        }
+                    });
+
+            requestQueue.add(request);
+        } catch (JSONException e) {
+            Log.e("NetworkError","Internet Connectivity Issue");
+        }
     }
 
     @Override
