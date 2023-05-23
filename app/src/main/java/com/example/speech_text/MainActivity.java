@@ -8,6 +8,7 @@ import androidx.core.content.ContextCompat;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.speech.RecognitionListener;
@@ -32,7 +33,6 @@ import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import org.json.JSONException;
 import org.json.JSONObject;
-
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -47,6 +47,7 @@ public class MainActivity extends AppCompatActivity {
     private ImageView micButton;
     private Button annotate;
     private TextView userName;
+    private TextView notify;
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -60,13 +61,14 @@ public class MainActivity extends AppCompatActivity {
         editText = findViewById(R.id.text);
         micButton = findViewById(R.id.button);
         annotate = findViewById(R.id.annotate);
+        notify = findViewById(R.id.notify);
         speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this);
         userName.setText(LoginActivity.username);
         final Intent speechRecognizerIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
         speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
         annotate.setEnabled(false);
-
+        notify.setVisibility(View.INVISIBLE);
         editText.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -163,6 +165,18 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    public void setNotify(String color_val, String context) {
+        notify.setVisibility(View.VISIBLE);
+        notify.setText(context);
+        notify.setBackgroundColor(Color.parseColor(color_val));
+        notify.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                notify.setVisibility(View.INVISIBLE);
+            }
+        }, 5000);
+    }
+
     private void sendJsonValue() {
         String url = "https://10.5.20.174:3000/label";
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
@@ -180,6 +194,7 @@ public class MainActivity extends AppCompatActivity {
                             Log.d("Response", response.toString());
                             editText.setText("");
                             editText.setHint("Tap to Speak");
+                            setNotify("#009933", response.toString());
                         }
                     },
                     new Response.ErrorListener() {
@@ -187,12 +202,15 @@ public class MainActivity extends AppCompatActivity {
                         public void onErrorResponse(VolleyError error) {
                             // Handle error response
                             Log.e("Error", error.toString());
+                            setNotify("#cc0000", error.toString());
+
                         }
                     });
 
             requestQueue.add(request);
         } catch (JSONException e) {
             Log.e("NetworkError","Internet Connectivity Issue");
+            setNotify("#e6b800", "Internet Connectivity Issue");
         }
     }
 
