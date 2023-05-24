@@ -2,11 +2,13 @@ package com.example.speech_text;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import android.Manifest;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.media.MediaPlayer;
@@ -48,13 +50,14 @@ public class MainActivity extends AppCompatActivity {
     private ImageView micButton;
     private Button annotate;
     private TextView userName;
+    private Button logout;
     private TextView notify;
     private Boolean isPressed;
+    private static String user;
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
         if(ContextCompat.checkSelfPermission(this,Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED){
             checkPermission();
         }
@@ -64,9 +67,12 @@ public class MainActivity extends AppCompatActivity {
         micButton = findViewById(R.id.button);
         annotate = findViewById(R.id.annotate);
         notify = findViewById(R.id.notify);
+        logout = findViewById(R.id.logout);
         isPressed = false;
         speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this);
-        userName.setText("User: "+LoginActivity.username);
+        SharedPreferences sp1=this.getSharedPreferences("Login", MODE_PRIVATE);
+        user=sp1.getString("Unm", null);
+        userName.setText(user);
         final MediaPlayer mic_start = MediaPlayer.create(this, R.raw.discord_sounds);
         final MediaPlayer mic_stop = MediaPlayer.create(this, R.raw.discord_leave);
         final Intent speechRecognizerIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
@@ -155,6 +161,17 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        logout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                SharedPreferences.Editor Ed = sp1.edit();
+                Ed.remove("Unm");
+                Ed.apply();
+                startActivity(new Intent(MainActivity.this, LoginActivity.class));
+                finish();
+            }
+        });
+
         micButton.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
@@ -204,7 +221,7 @@ public class MainActivity extends AppCompatActivity {
         String url = "https://10.5.20.174:3000/label";
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
         String currentDateAndTime = dateFormat.format(new Date());
-        String jsonString = String.format("{\"customer\":\"%s\", \"ts\":\"%s\", \"label\":\"%s\"}", LoginActivity.username, currentDateAndTime, editText.getText());
+        String jsonString = String.format("{\"customer\":\"%s\", \"ts\":\"%s\", \"label\":\"%s\"}", user, currentDateAndTime, editText.getText());
         HttpsTrustManager.allowAllSSL();
         try {
             JSONObject jsonBody = new JSONObject(jsonString);
